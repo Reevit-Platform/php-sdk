@@ -1,7 +1,6 @@
 {
     "name": "reevit/reevit-php",
     "description": "Reevit PHP SDK",
-    "version": "0.3.0",
     "type": "library",
     "license": "MIT",
     "autoload": {
