@@ -1,0 +1,29 @@
+name: Publish to Packagist
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      # Note: Packagist auto-syncs from GitHub
+      # This workflow just validates the package is ready
+      - name: Verify package
+        run: |
+          echo "Package is ready for Packagist"
+          echo "Make sure your repo is registered at https://packagist.org"
