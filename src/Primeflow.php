@@ -38,7 +38,7 @@ class Reevit
                 'User-Agent'      => '@reevit/php',
                 'Authorization' => 'Bearer ' . $apiKey,
                 'X-Reevit-Client' => '@reevit/php',
-                'X-Reevit-Client-Version' => '0.1.0',
+                'X-Reevit-Client-Version' => '0.3.2',
             ],
         ]);
 
