@@ -9,7 +9,7 @@ The official PHP SDK for [Reevit](https://reevit.io) — a unified payment orche
 ## Installation
 
 ```bash
-composer require reevit/reevit-php
+composer require reevit/reevit-php:0.5.0
 ```
 
 ## Quick Start
