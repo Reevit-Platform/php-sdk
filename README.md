@@ -426,6 +426,26 @@ return [
 ];
 ```
 
+## Supported PSPs
+
+| Provider | Countries | Payment Methods |
+|----------|-----------|-----------------|
+| Paystack | NG, GH, ZA, KE | Card, Mobile Money, Bank Transfer |
+| Flutterwave | NG, GH, KE, ZA + | Card, Mobile Money, Bank Transfer |
+| Hubtel | GH | Mobile Money |
+| Stripe | Global (50+) | Card, Apple Pay, Google Pay |
+| Monnify | NG | Card, Bank Transfer, USSD |
+| M-Pesa | KE, TZ | Mobile Money (STK Push) |
+
+---
+
+## Release Notes
+
+### v0.5.0
+
+- Added support for Apple Pay and Google Pay
+- Updated supported PSPs and payment methods documentation
+
 ---
 
 ## Environment Variables
