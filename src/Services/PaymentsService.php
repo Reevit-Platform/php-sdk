@@ -13,11 +13,14 @@ class PaymentsService
         $this->client = $client;
     }
 
-    public function createIntent(array $data)
+    public function createIntent(array $data, ?string $idempotencyKey = null)
     {
-        $response = $this->client->post('/v1/payments/intents', [
-            'json' => $data
-        ]);
+        $options = ['json' => $data];
+        if ($idempotencyKey) {
+            $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
+        }
+
+        $response = $this->client->post('/v1/payments/intents', $options);
 
         return json_decode($response->getBody(), true);
     }

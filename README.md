@@ -33,13 +33,29 @@ $payment = $client->payments->createIntent([
     'metadata' => [
         'order_id' => '12345'
     ]
-]);
+], 'order_12345');
 
 echo "Payment created: " . $payment['id'] . "\n";
 
 // List payments
 $payments = $client->payments->list();
 print_r($payments);
+```
+
+## Idempotency
+
+Pass an idempotency key as the second argument to prevent duplicate intent creation.
+
+```php
+$intent = $client->payments->createIntent(
+    [
+        'amount' => 5000,
+        'currency' => 'GHS',
+        'method' => 'momo',
+        'country' => 'GH',
+    ],
+    'order_12345'
+);
 ```
 
 ## Features
