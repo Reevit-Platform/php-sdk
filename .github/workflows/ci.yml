@@ -30,5 +30,31 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
+      - name: Report dependency audit
+        run: composer audit || true
+
+      - name: Validate tracked package files
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, sys
+          root = pathlib.Path('.')
+          tracked = subprocess.check_output(['git', 'ls-files', '-z'], text=True).split('\0')
+          errors = []
+          for rel in filter(None, tracked):
+              if rel.endswith('.gitkeep'):
+                  continue
+              path = root / rel
+              if rel.endswith(('.new', '.tmp', '.bak', '.orig')):
+                  errors.append(f"tracked temp file: {rel}")
+              if path.is_file() and path.stat().st_size == 0:
+                  errors.append(f"empty tracked file: {rel}")
+          if errors:
+              print('\n'.join(errors))
+              sys.exit(1)
+          PY
+
+      - name: Lint PHP sources
+        run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
+
       - name: Run tests
         run: composer test || echo "No tests configured"

@@ -2,29 +2,60 @@
 
 namespace Reevit\Services;
 
-use GuzzleHttp\Client;
+use Reevit\Reevit;
 
 class SubscriptionsService
 {
-    private $client;
+    private Reevit $client;
 
-    public function __construct(Client $client)
+    public function __construct(Reevit $client)
     {
         $this->client = $client;
     }
 
-    public function create(array $data)
+    public function create(array $data, ?string $idempotencyKey = null): array
     {
-        $response = $this->client->post('/v1/subscriptions', [
-            'json' => $data
-        ]);
-
-        return json_decode($response->getBody(), true);
+        $options = ['json' => $data];
+        if ($idempotencyKey) {
+            $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
+        }
+        return $this->client->request('POST', '/v1/subscriptions', $options);
     }
 
-    public function list()
+    public function list(array $query = []): array
     {
-        $response = $this->client->get('/v1/subscriptions');
-        return json_decode($response->getBody(), true);
+        return $this->client->request('GET', '/v1/subscriptions', ['query' => $query]);
+    }
+
+    public function get(string $id): array
+    {
+        return $this->client->request('GET', "/v1/subscriptions/{$id}");
+    }
+
+    public function update(string $id, array $data, ?string $idempotencyKey = null): array
+    {
+        $options = ['json' => $data];
+        if ($idempotencyKey) {
+            $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
+        }
+        return $this->client->request('PATCH', "/v1/subscriptions/{$id}", $options);
+    }
+
+    public function cancel(string $id, ?string $idempotencyKey = null): array
+    {
+        $options = ['json' => new \stdClass()];
+        if ($idempotencyKey) {
+            $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
+        }
+        return $this->client->request('POST', "/v1/subscriptions/{$id}/cancel", $options);
+    }
+
+    public function resume(string $id, ?string $idempotencyKey = null): array
+    {
+        $options = ['json' => new \stdClass()];
+        if ($idempotencyKey) {
+            $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
+        }
+        return $this->client->request('POST', "/v1/subscriptions/{$id}/resume", $options);
     }
 }

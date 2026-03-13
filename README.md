@@ -21,7 +21,7 @@ require 'vendor/autoload.php';
 
 use Reevit\Reevit;
 
-$client = new Reevit('pfk_live_xxx');
+$client = new Reevit('pfk_live_xxx', 'org_123');
 
 // Create a payment
 $payment = $client->payments->createIntent([
@@ -60,11 +60,14 @@ $intent = $client->payments->createIntent(
 
 ## Features
 
-- **Payments**: Create intents, refund, list
-- **Connections**: Manage PSP integrations
-- **Subscriptions**: Manage recurring billing
+- **Payments**: Create intents, update intents, confirm, confirm intent, cancel, retry, refund, stats
+- **Connections**: Manage PSP integrations, validation, labels, status, audit
+- **Subscriptions**: Manage recurring billing lifecycle
 - **Fraud**: Configure fraud rules
+- **Customers / Payment Links / Webhooks / Routing Rules / Invoices**: Additional backend services
 - **PSR-4 Autoloading**: Standard PHP structure
+
+Passing `null` for `orgId` is still accepted for backward compatibility, but authenticated org-scoped requests should include it.
 
 ---
 
@@ -483,11 +486,10 @@ REEVIT_WEBHOOK_SECRET=whsec_xxx  # Get from Dashboard > Developers > Webhooks
 
 ### v0.3.0
 
-- Updated API client to connect to production and sandbox URLs based on API key
-- Added Bearer authentication headers for secure API communication
-- Removed orgId parameter from client initialization (simplified API)
-- Added .gitignore file to exclude unnecessary files from version control
-- Updated README.md with corrected quick start example
+- Standardized authenticated requests on `X-Reevit-Key`
+- Restored `orgId` support on the client constructor
+- Defaulted all requests to `https://api.reevit.io`
+- Added payment lifecycle, customer, payment link, webhook, routing rule, and invoice services
 
 ---
 
