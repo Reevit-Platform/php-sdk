@@ -1,6 +1,6 @@
 {
     "name": "reevit/reevit-php",
-    "version": "0.7.1",
+    "version": "0.9.0",
     "description": "Reevit PHP SDK",
     "type": "library",
     "license": "MIT",

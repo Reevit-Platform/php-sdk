@@ -7,6 +7,6 @@ namespace Reevit;
 /**
  * @deprecated Use Reevit instead.
  */
-class Primeflow extends Reevit
+class Reevit extends Reevit
 {
 }

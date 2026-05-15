@@ -9,7 +9,7 @@ The official PHP SDK for [Reevit](https://reevit.io) — a unified payment orche
 ## Installation
 
 ```bash
-composer require reevit/reevit-php:0.7.0
+composer require reevit/reevit-php:0.9.0
 ```
 
 ## Quick Start
@@ -42,6 +42,19 @@ $payments = $client->payments->list();
 print_r($payments);
 ```
 
+## Server-created checkout sessions
+
+Create checkout sessions on your server and pass `$session['session_secret']` to the browser SDK.
+
+```php
+$session = $client->checkoutSessions->create([
+    'amount' => 5000,
+    'currency' => 'GHS',
+    'method' => 'mobile_money',
+    'country' => 'GH',
+], 'order_12345');
+```
+
 ## Idempotency
 
 Pass an idempotency key as the second argument to prevent duplicate intent creation.
@@ -64,7 +77,7 @@ $intent = $client->payments->createIntent(
 - **Connections**: Manage PSP integrations, validation, labels, status, audit
 - **Subscriptions**: Manage recurring billing lifecycle
 - **Fraud**: Configure fraud rules
-- **Customers / Payment Links / Webhooks / Routing Rules / Invoices**: Additional backend services
+- **Customers / Payment Links / Checkout Sessions / Webhooks / Routing Rules / Invoices**: Additional backend services
 - **PSR-4 Autoloading**: Standard PHP structure
 
 Passing `null` for `orgId` is still accepted for backward compatibility, but authenticated org-scoped requests should include it.
@@ -460,13 +473,11 @@ return [
 
 ## Release Notes
 
-### v0.7.0
+### v0.9.0
 
+- Added server-created checkout sessions
 - Version alignment across all Reevit SDKs
 - Updated documentation and webhook examples
-
-### v0.5.0
-
 - Added support for Apple Pay and Google Pay
 - Updated supported PSPs and payment methods documentation
 
@@ -479,10 +490,6 @@ REEVIT_API_KEY=pfk_live_xxx
 REEVIT_ORG_ID=org_xxx
 REEVIT_WEBHOOK_SECRET=whsec_xxx  # Get from Dashboard > Developers > Webhooks
 ```
-
----
-
-## Release Notes
 
 ### v0.3.0
 

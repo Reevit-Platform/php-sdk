@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Reevit;
 
 use GuzzleHttp\Client;
+use Reevit\Services\CheckoutSessionsService;
 use Reevit\Services\ConnectionsService;
 use Reevit\Services\CustomersService;
 use Reevit\Services\FraudService;
@@ -29,6 +30,7 @@ class Reevit
     public FraudService $fraud;
     public CustomersService $customers;
     public PaymentLinksService $paymentLinks;
+    public CheckoutSessionsService $checkoutSessions;
     public WebhooksService $webhooks;
     public RoutingRulesService $routingRules;
     public InvoicesService $invoices;
@@ -48,7 +50,7 @@ class Reevit
                 'User-Agent' => '@reevit/php',
                 'X-Reevit-Key' => $apiKey,
                 'X-Reevit-Client' => '@reevit/php',
-                'X-Reevit-Client-Version' => '0.7.1',
+                'X-Reevit-Client-Version' => '0.9.0',
             ],
         ]);
 
@@ -58,6 +60,7 @@ class Reevit
         $this->fraud = new FraudService($this);
         $this->customers = new CustomersService($this);
         $this->paymentLinks = new PaymentLinksService($this);
+        $this->checkoutSessions = new CheckoutSessionsService($this);
         $this->webhooks = new WebhooksService($this);
         $this->routingRules = new RoutingRulesService($this);
         $this->invoices = new InvoicesService($this);
