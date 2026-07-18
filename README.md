@@ -108,6 +108,8 @@ There are **two types of webhooks** in Reevit:
 3. Copy the signing secret (starts with `whsec_`)
 4. Set environment variable: `REEVIT_WEBHOOK_SECRET=whsec_xxx...`
 
+The SDK ships a constant-time verifier — `Reevit\Webhooks\SignatureVerifier::verify($payload, $signature, $secret)` — so you do not have to reimplement HMAC. Pass the **raw** request body (`file_get_contents('php://input')`, not parsed-and-reencoded JSON), the `X-Reevit-Signature` header, and your signing secret.
+
 ### PHP Webhook Handler
 
 ```php
@@ -115,6 +117,10 @@ There are **two types of webhooks** in Reevit:
 // webhooks/reevit.php
 
 declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Reevit\Webhooks\SignatureVerifier;
 
 /**
  * Payment event data structure
@@ -162,20 +168,6 @@ class SubscriptionData {
         $this->interval = $data['interval'] ?? '';
         $this->next_renewal_at = $data['next_renewal_at'] ?? null;
     }
-}
-
-/**
- * Verify the webhook signature using HMAC-SHA256
- */
-function verifySignature(string $payload, string $signature, string $secret): bool {
-    if (strpos($signature, 'sha256=') !== 0) {
-        return false;
-    }
-    
-    $expected = hash_hmac('sha256', $payload, $secret);
-    $received = substr($signature, 7); // Remove "sha256=" prefix
-    
-    return hash_equals($expected, $received);
 }
 
 // Payment handlers
@@ -238,7 +230,7 @@ $signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'] ?? '';
 $secret = getenv('REEVIT_WEBHOOK_SECRET');
 
 // Verify signature (required in production)
-if ($secret && !verifySignature($payload, $signature, $secret)) {
+if (!SignatureVerifier::verify($payload, $signature, $secret)) {
     http_response_code(401);
     echo json_encode(['error' => 'Invalid signature']);
     exit;
@@ -310,6 +302,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Reevit\Webhooks\SignatureVerifier;
 
 class WebhookController extends Controller
 {
@@ -320,7 +313,7 @@ class WebhookController extends Controller
         $secret = config('services.reevit.webhook_secret');
         
         // Verify signature (required in production)
-        if ($secret && !$this->verifySignature($payload, $signature, $secret)) {
+        if (!SignatureVerifier::verify($payload, $signature, $secret)) {
             Log::warning('[Webhook] Invalid signature');
             return response()->json(['error' => 'Invalid signature'], 401);
         }
@@ -369,18 +362,6 @@ class WebhookController extends Controller
         }
         
         return response()->json(['received' => true]);
-    }
-    
-    private function verifySignature(string $payload, string $signature, string $secret): bool
-    {
-        if (strpos($signature, 'sha256=') !== 0) {
-            return false;
-        }
-        
-        $expected = hash_hmac('sha256', $payload, $secret);
-        $received = substr($signature, 7);
-        
-        return hash_equals($expected, $received);
     }
     
     // Payment handlers
