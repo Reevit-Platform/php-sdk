@@ -2,6 +2,7 @@
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 use UnexpectedValueException;
 
@@ -104,7 +105,7 @@ class ConnectionsService
     public function listAudit(string $id, array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/connections/' . rawurlencode($id) . '/audit', ['query' => $query]);
-        return is_array($response) && isset($response['audit']) ? $response['audit'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'audit');
     }
 
     public function listLabels(): array

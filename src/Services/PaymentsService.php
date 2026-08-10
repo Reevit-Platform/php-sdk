@@ -2,6 +2,7 @@
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class PaymentsService
@@ -24,12 +25,13 @@ class PaymentsService
 
     public function list(int $limit = 50, int $offset = 0): array
     {
-        return $this->client->request('GET', '/v1/payments', [
+        $response = $this->client->request('GET', '/v1/payments', [
             'query' => [
                 'limit' => $limit,
                 'offset' => $offset
             ]
         ]);
+        return ListEnvelope::extractArray($response, 'payments');
     }
 
     public function get(string $id): array
