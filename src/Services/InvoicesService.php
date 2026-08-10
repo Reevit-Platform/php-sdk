@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class InvoicesService
@@ -15,7 +16,7 @@ class InvoicesService
     public function list(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/invoices', ['query' => $query]);
-        return is_array($response) && isset($response['invoices']) ? $response['invoices'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'invoices');
     }
 
     public function get(string $id): array

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class CustomersService
@@ -15,7 +16,7 @@ class CustomersService
     public function list(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/customers', ['query' => $query]);
-        return is_array($response) && isset($response['customers']) ? $response['customers'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'customers');
     }
 
     public function create(array $data, ?string $idempotencyKey = null): array
@@ -58,12 +59,12 @@ class CustomersService
     public function top(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/customers/top', ['query' => $query]);
-        return is_array($response) && isset($response['customers']) ? $response['customers'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'customers');
     }
 
     public function paymentHistory(string $id, array $query = []): array
     {
         $response = $this->client->request('GET', "/v1/customers/{$id}/payments", ['query' => $query]);
-        return is_array($response) && isset($response['payments']) ? $response['payments'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'payments');
     }
 }

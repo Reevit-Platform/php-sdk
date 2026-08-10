@@ -2,6 +2,7 @@
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class SubscriptionsService
@@ -24,7 +25,8 @@ class SubscriptionsService
 
     public function list(array $query = []): array
     {
-        return $this->client->request('GET', '/v1/subscriptions', ['query' => $query]);
+        $response = $this->client->request('GET', '/v1/subscriptions', ['query' => $query]);
+        return ListEnvelope::extractArray($response, 'subscriptions');
     }
 
     public function get(string $id): array

@@ -2,6 +2,7 @@
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class ConnectionsService
@@ -25,7 +26,7 @@ class ConnectionsService
     public function list(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/connections', ['query' => $query]);
-        return is_array($response) && isset($response['connections']) ? $response['connections'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'connections');
     }
 
     public function get(string $id): array
@@ -54,7 +55,7 @@ class ConnectionsService
     public function listAudit(string $id, array $query = []): array
     {
         $response = $this->client->request('GET', "/v1/connections/{$id}/audit", ['query' => $query]);
-        return is_array($response) && isset($response['audit']) ? $response['audit'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'audit');
     }
 
     public function updateLabels(string $id, array $labels, ?string $idempotencyKey = null): array
