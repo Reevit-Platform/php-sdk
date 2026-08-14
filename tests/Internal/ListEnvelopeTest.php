@@ -59,6 +59,7 @@ final class ListEnvelopeTest extends TestCase
         $response = ['pagination' => ['total' => 0, 'has_more' => false]];
 
         $this->assertSame([], ListEnvelope::extractArray($response, 'customers'));
+        $this->assertNull(ListEnvelope::tryExtractArray($response, 'customers'));
     }
 
     public function testNullResponseReturnsEmptyArray(): void

@@ -11,6 +11,7 @@ use Reevit\Services\CustomersService;
 use Reevit\Services\FraudService;
 use Reevit\Services\InvoicesService;
 use Reevit\Services\PaymentLinksService;
+use Reevit\Services\PayoutsService;
 use Reevit\Services\PaymentsService;
 use Reevit\Services\RoutingRulesService;
 use Reevit\Services\SubscriptionsService;
@@ -34,6 +35,7 @@ class Reevit
     public WebhooksService $webhooks;
     public RoutingRulesService $routingRules;
     public InvoicesService $invoices;
+    public PayoutsService $payouts;
 
     public function __construct(
         string $apiKey,
@@ -64,6 +66,7 @@ class Reevit
         $this->webhooks = new WebhooksService($this);
         $this->routingRules = new RoutingRulesService($this);
         $this->invoices = new InvoicesService($this);
+        $this->payouts = new PayoutsService($this);
     }
 
     public function request(string $method, string $path, array $options = []): mixed

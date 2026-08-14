@@ -82,6 +82,10 @@ $intent = $client->payments->createIntent(
 
 Passing `null` for `orgId` is still accepted for backward compatibility, but authenticated org-scoped requests should include it.
 
+Use `$client->connections->listPage()` when pagination metadata matters, or
+`$client->connections->listAll()` to fetch every connected PSP matching the
+supplied filters.
+
 ---
 
 ## Webhook Verification

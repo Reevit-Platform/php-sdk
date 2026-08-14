@@ -35,8 +35,22 @@ final class ListEnvelope
      */
     public static function extractArray($response, string $key): array
     {
+        return self::tryExtractArray($response, $key) ?? [];
+    }
+
+    /**
+     * Extract a collection while preserving the distinction between an empty
+     * collection and a response that contains no supported collection shape.
+     *
+     * @param mixed  $response The decoded response body.
+     * @param string $key      The legacy flat key for this resource.
+     *
+     * @return array<int, mixed>|null
+     */
+    public static function tryExtractArray($response, string $key): ?array
+    {
         if (!is_array($response)) {
-            return [];
+            return null;
         }
 
         // Shape 1: bare list.
@@ -61,7 +75,7 @@ final class ListEnvelope
             }
         }
 
-        return [];
+        return null;
     }
 
     /**
