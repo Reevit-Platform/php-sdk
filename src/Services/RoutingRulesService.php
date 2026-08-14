@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class RoutingRulesService
@@ -15,7 +16,7 @@ class RoutingRulesService
     public function list(): array
     {
         $response = $this->client->request('GET', '/v1/routing-rules');
-        return is_array($response) && isset($response['rules']) ? $response['rules'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'rules');
     }
 
     public function create(array $data, ?string $idempotencyKey = null): array

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class PaymentLinksService
@@ -15,7 +16,7 @@ class PaymentLinksService
     public function list(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/payment-links', ['query' => $query]);
-        return is_array($response) && isset($response['payment_links']) ? $response['payment_links'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'payment_links');
     }
 
     public function create(array $data, ?string $idempotencyKey = null): array
@@ -58,7 +59,7 @@ class PaymentLinksService
     public function listPayments(string $id, array $query = []): array
     {
         $response = $this->client->request('GET', "/v1/payment-links/{$id}/payments", ['query' => $query]);
-        return is_array($response) && isset($response['payments']) ? $response['payments'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'payments');
     }
 
     public function getByCode(string $code): array

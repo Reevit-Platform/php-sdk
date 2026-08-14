@@ -2,6 +2,7 @@
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 use UnexpectedValueException;
 
@@ -34,27 +35,21 @@ class ConnectionsService
         if (!is_array($response)) {
             throw new UnexpectedValueException('unexpected connections response: expected an object');
         }
-        if ($this->isList($response)) {
-            return [
-                'connections' => $response,
-                'pagination' => [
-                    'total' => count($response),
-                    'limit' => $query['limit'] ?? count($response),
-                    'offset' => $query['offset'] ?? 0,
-                ],
-            ];
-        }
-        if (!isset($response['connections']) || !is_array($response['connections'])) {
+
+        $connections = ListEnvelope::tryExtractArray($response, 'connections');
+        if ($connections === null) {
             throw new UnexpectedValueException('unexpected connections response: missing connections array');
         }
+
         $pagination = isset($response['pagination']) && is_array($response['pagination'])
             ? $response['pagination']
             : [];
+
         return [
-            'connections' => $response['connections'],
+            'connections' => $connections,
             'pagination' => [
-                'total' => $pagination['total'] ?? count($response['connections']),
-                'limit' => $pagination['limit'] ?? ($query['limit'] ?? count($response['connections'])),
+                'total' => $pagination['total'] ?? count($connections),
+                'limit' => $pagination['limit'] ?? ($query['limit'] ?? count($connections)),
                 'offset' => $pagination['offset'] ?? ($query['offset'] ?? 0),
             ],
         ];
@@ -104,7 +99,7 @@ class ConnectionsService
     public function listAudit(string $id, array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/connections/' . rawurlencode($id) . '/audit', ['query' => $query]);
-        return is_array($response) && isset($response['audit']) ? $response['audit'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'audit');
     }
 
     public function listLabels(): array

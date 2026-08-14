@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Reevit\Services;
 
+use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
 
 class WebhooksService
@@ -47,7 +48,7 @@ class WebhooksService
     public function listEvents(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/webhooks/events', ['query' => $query]);
-        return is_array($response) && isset($response['events']) ? $response['events'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'events');
     }
 
     public function getEvent(string $id): array
@@ -67,7 +68,7 @@ class WebhooksService
     public function listOutbound(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/webhooks/outbound', ['query' => $query]);
-        return is_array($response) && isset($response['outbound']) ? $response['outbound'] : ($response ?? []);
+        return ListEnvelope::extractArray($response, 'outbound');
     }
 
     public function getOutbound(string $id): array
