@@ -90,10 +90,12 @@ final class BaseUrlTest extends TestCase
      */
     private function clientWith(?string $baseUrl, array &$requests): Reevit
     {
+        // A bare list is a recognised shape for both the object-returning and
+        // the list-returning endpoints exercised here.
         $mock = new MockHandler(array_fill(0, 4, new Response(
             200,
             ['Content-Type' => 'application/json'],
-            json_encode(['id' => 'pay_123'])
+            json_encode([['id' => 'pay_123']])
         )));
         $stack = HandlerStack::create($mock);
         $stack->push(Middleware::history($requests));

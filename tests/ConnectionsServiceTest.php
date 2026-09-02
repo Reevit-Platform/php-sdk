@@ -6,6 +6,7 @@ namespace Reevit\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Reevit\Reevit;
+use Reevit\ReevitApiException;
 use Reevit\Services\ConnectionsService;
 
 final class ConnectionsServiceTest extends TestCase
@@ -93,5 +94,44 @@ final class ConnectionsServiceTest extends TestCase
             [['label' => 'primary', 'total' => 2]],
             $service->listLabels()
         );
+    }
+
+    /**
+     * ConnectionsService used to raise \UnexpectedValueException here while
+     * PaymentsService swallowed the same condition and returned []. Both now
+     * raise the SDK's own error with the shared code.
+     */
+    public function testListPageRaisesTheSharedErrorOnAnUnrecognisedShape(): void
+    {
+        $client = $this->getMockBuilder(Reevit::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['request'])
+            ->getMock();
+        $client->method('request')->willReturn(['pagination' => ['total' => 0]]);
+        $service = new ConnectionsService($client);
+
+        try {
+            $service->listPage();
+            $this->fail('expected ReevitApiException');
+        } catch (ReevitApiException $e) {
+            $this->assertSame('unexpected_response_shape', $e->errorCode);
+        }
+    }
+
+    public function testListLabelsRaisesTheSharedErrorOnAnUnrecognisedShape(): void
+    {
+        $client = $this->getMockBuilder(Reevit::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['request'])
+            ->getMock();
+        $client->method('request')->willReturn(['labels' => []]);
+        $service = new ConnectionsService($client);
+
+        try {
+            $service->listLabels();
+            $this->fail('expected ReevitApiException');
+        } catch (ReevitApiException $e) {
+            $this->assertSame('unexpected_response_shape', $e->errorCode);
+        }
     }
 }

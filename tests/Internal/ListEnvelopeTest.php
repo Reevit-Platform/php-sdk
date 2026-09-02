@@ -6,6 +6,7 @@ namespace Reevit\Tests\Internal;
 
 use PHPUnit\Framework\TestCase;
 use Reevit\Internal\ListEnvelope;
+use Reevit\ReevitApiException;
 
 final class ListEnvelopeTest extends TestCase
 {
@@ -51,34 +52,57 @@ final class ListEnvelopeTest extends TestCase
         $this->assertSame($records, ListEnvelope::extractArray($response, 'logs'));
     }
 
-    public function testMissingKeyReturnsEmptyArrayNotTheEnvelope(): void
+    /**
+     * The policy this encodes: `[]` means "a recognised container, and it was
+     * empty". An unrecognised body raises, because a reconciliation sweep that
+     * silently returns `[]` after a shape change reports zero settlements.
+     * Matches the Go and Rust SDKs.
+     *
+     * @dataProvider unrecognisedShapeProvider
+     *
+     * @param mixed $response
+     */
+    public function testUnrecognisedShapeRaisesRatherThanReturningAnEmptyList($response): void
     {
-        // This is the bug being fixed: a response that is a non-empty
-        // associative array with neither the legacy key nor a usable `data`
-        // key must resolve to [], never to the raw envelope.
-        $response = ['pagination' => ['total' => 0, 'has_more' => false]];
-
-        $this->assertSame([], ListEnvelope::extractArray($response, 'customers'));
         $this->assertNull(ListEnvelope::tryExtractArray($response, 'customers'));
+
+        $this->expectException(ReevitApiException::class);
+        ListEnvelope::extractArray($response, 'customers');
     }
 
-    public function testNullResponseReturnsEmptyArray(): void
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function unrecognisedShapeProvider(): array
     {
-        $this->assertSame([], ListEnvelope::extractArray(null, 'customers'));
-    }
-
-    public function testNonArrayResponseReturnsEmptyArray(): void
-    {
-        $this->assertSame([], ListEnvelope::extractArray('unexpected-string', 'customers'));
-    }
-
-    public function testDataKeyThatIsNotAListAndLacksTheExpectedKeyReturnsEmptyArray(): void
-    {
-        $response = [
-            'data' => ['unrelated' => 'value'],
-            'pagination' => ['total' => 0, 'has_more' => false],
+        return [
+            'envelope with neither the key nor data' => [['pagination' => ['total' => 0, 'has_more' => false]]],
+            'null body (e.g. a 204)' => [null],
+            'non-array body' => ['unexpected-string'],
+            'data object lacking the expected key' => [[
+                'data' => ['unrelated' => 'value'],
+                'pagination' => ['total' => 0, 'has_more' => false],
+            ]],
         ];
+    }
 
-        $this->assertSame([], ListEnvelope::extractArray($response, 'customers'));
+    public function testUnrecognisedShapeCarriesTheSharedErrorCode(): void
+    {
+        try {
+            ListEnvelope::extractArray(['pagination' => []], 'customers');
+            $this->fail('expected ReevitApiException');
+        } catch (ReevitApiException $e) {
+            $this->assertSame('unexpected_response_shape', $e->errorCode);
+            $this->assertSame(0, $e->status);
+            $this->assertStringContainsString('customers', $e->getMessage());
+        }
+    }
+
+    public function testARecognisedButEmptyContainerStillReturnsAnEmptyList(): void
+    {
+        $this->assertSame([], ListEnvelope::extractArray([], 'customers'));
+        $this->assertSame([], ListEnvelope::extractArray(['customers' => []], 'customers'));
+        $this->assertSame([], ListEnvelope::extractArray(['data' => [], 'pagination' => []], 'customers'));
+        $this->assertSame([], ListEnvelope::extractArray(['data' => ['customers' => []]], 'customers'));
     }
 }

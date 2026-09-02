@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Reevit\Internal;
 
+use Reevit\ReevitApiException;
+
 /**
  * Defensive unwrapping for list-endpoint responses.
  *
@@ -15,9 +17,12 @@ namespace Reevit\Internal;
  *   4. `{"data": {"logs": [...]}, "pagination": {...}}` double-nested envelope
  *
  * {@see extractArray()} normalizes all four shapes to the plain list of
- * records, and returns `[]` for anything else. It never returns the raw
- * envelope itself -- doing so would let a caller iterate `data` and
- * `pagination` as if they were records.
+ * records, and raises `unexpected_response_shape` for anything else. It never
+ * returns the raw envelope itself -- doing so would let a caller iterate `data`
+ * and `pagination` as if they were records, and it never returns `[]` for an
+ * unrecognised body: a reconciliation sweep cannot tell "no settlements" from
+ * "the response shape changed under us". Empty only ever means a recognised
+ * container that was empty. This matches the Go and Rust SDKs.
  *
  * This class intentionally does not read or expose pagination metadata
  * (`total`, `has_more`, cursors, ...); it exists solely to keep list methods
@@ -32,10 +37,37 @@ final class ListEnvelope
      * @param string $key      The legacy flat key for this resource, e.g. 'customers'.
      *
      * @return array<int, mixed>
+     *
+     * @throws ReevitApiException When the body matches none of the four
+     *                            supported shapes.
      */
     public static function extractArray($response, string $key): array
     {
-        return self::tryExtractArray($response, $key) ?? [];
+        $records = self::tryExtractArray($response, $key);
+        if ($records === null) {
+            throw self::unexpectedShape($key);
+        }
+
+        return $records;
+    }
+
+    /**
+     * The shared `unexpected_response_shape` error, so every list method in the
+     * SDK reports a shape mismatch identically.
+     */
+    public static function unexpectedShape(string $key): ReevitApiException
+    {
+        return new ReevitApiException(
+            sprintf(
+                'unexpected response shape: no "%s" list found (expected a bare array, {"%s":[...]}, '
+                . '{"data":[...]} or {"data":{"%s":[...]}})',
+                $key,
+                $key,
+                $key
+            ),
+            0,
+            'unexpected_response_shape'
+        );
     }
 
     /**

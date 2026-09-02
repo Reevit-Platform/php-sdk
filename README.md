@@ -522,6 +522,13 @@ return [
   raises `ReevitApiException` with code `invalid_response` instead of reaching
   the service layer as `null` and surfacing as a `TypeError` from inside the
   SDK.
+- **Behaviour change**: a list endpoint whose body matches none of the four
+  supported shapes now raises `ReevitApiException` with code
+  `unexpected_response_shape` instead of returning `[]`. An empty list now only
+  ever means a recognised container that was empty, so a reconciliation sweep
+  can tell "no settlements" from "the response shape changed". This matches the
+  Go and Rust SDKs. `ConnectionsService` already raised here (as
+  `\UnexpectedValueException`) and now raises `ReevitApiException` too.
 
 ### v0.9.0
 
