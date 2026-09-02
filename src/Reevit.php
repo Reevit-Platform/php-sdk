@@ -60,7 +60,7 @@ class Reevit
     ) {
         $this->orgId = $orgId;
         $config = [
-            'base_uri' => $baseUrl ?: self::API_BASE_URL_PRODUCTION,
+            'base_uri' => self::normalizeBaseUrl($baseUrl ?: self::API_BASE_URL_PRODUCTION),
             'timeout' => $timeout,
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -104,7 +104,7 @@ class Reevit
         $options['headers'] = $headers;
 
         try {
-            $response = $this->httpClient->request($method, $path, $options);
+            $response = $this->httpClient->request($method, self::relativePath($path), $options);
         } catch (RequestException $e) {
             throw self::apiExceptionFrom($e);
         } catch (TransferException $e) {
@@ -122,6 +122,28 @@ class Reevit
         }
 
         return json_decode($body, true);
+    }
+
+    /**
+     * Guzzle resolves `base_uri` against a request path per RFC 3986: a path
+     * with a leading `/` REPLACES the base path, so a base URL of
+     * `https://gateway.internal/reevit` would send `/v1/payments` rather than
+     * `/reevit/v1/payments` and every request to a path-mounted reverse proxy
+     * or staging environment would 404. Keeping a trailing slash on the base
+     * and a relative request path preserves the prefix.
+     */
+    private static function normalizeBaseUrl(string $baseUrl): string
+    {
+        return rtrim($baseUrl, '/') . '/';
+    }
+
+    /**
+     * Strip the leading slash so the path resolves relative to the (always
+     * trailing-slashed) base URL rather than replacing its path.
+     */
+    private static function relativePath(string $path): string
+    {
+        return ltrim($path, '/');
     }
 
     /**

@@ -507,6 +507,14 @@ return [
   longer fires — catch `Reevit\ReevitApiException` (or inspect
   `$e->getPrevious()`) instead.
 
+#### Fixed
+
+- A path prefix on a custom base URL is no longer dropped. `new Reevit($key,
+  $org, 'https://gateway.internal/reevit')` now requests
+  `/reevit/v1/payments`; previously Guzzle's RFC 3986 resolution let the
+  absolute request path replace the base path and the SDK requested
+  `/v1/payments`.
+
 ### v0.9.0
 
 - Added server-created checkout sessions
