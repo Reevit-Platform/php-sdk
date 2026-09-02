@@ -81,9 +81,15 @@ class PayoutsService
         return $this->client->request('GET', "/v1/beneficiaries/{$id}");
     }
 
-    public function deleteBeneficiary(string $id): void
+    /**
+     * @return array<string, mixed>|null The API's acknowledgement body, or null
+     *                                   when the endpoint answers 204 No Content.
+     */
+    public function deleteBeneficiary(string $id): ?array
     {
-        $this->client->request('DELETE', "/v1/beneficiaries/{$id}");
+        $response = $this->client->request('DELETE', "/v1/beneficiaries/{$id}");
+
+        return is_array($response) ? $response : null;
     }
 
     private function requireKey(string $idempotencyKey): string

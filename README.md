@@ -514,6 +514,14 @@ return [
   `/reevit/v1/payments`; previously Guzzle's RFC 3986 resolution let the
   absolute request path replace the base path and the SDK requested
   `/v1/payments`.
+- `WebhooksService::deleteConfig()` and `PayoutsService::deleteBeneficiary()`
+  now return `?array` instead of `void`, forwarding the API's acknowledgement
+  body (`['status' => 'deleted']`) and `null` on a 204. Ignoring the return
+  value stays valid.
+- A non-JSON success body (a proxy answering 200 with an HTML error page) now
+  raises `ReevitApiException` with code `invalid_response` instead of reaching
+  the service layer as `null` and surfacing as a `TypeError` from inside the
+  SDK.
 
 ### v0.9.0
 

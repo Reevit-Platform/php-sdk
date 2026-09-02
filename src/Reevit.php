@@ -118,10 +118,24 @@ class Reevit
 
         $body = (string) $response->getBody();
         if ($body === '') {
+            // 200/201 with an empty body. Callers that declare `: void` or
+            // `: ?array` handle this; there is nothing to decode.
             return null;
         }
 
-        return json_decode($body, true);
+        $decoded = json_decode($body, true);
+        if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+            // A proxy answering 200 with an HTML error page used to reach the
+            // service layer as null and blow up as a TypeError from inside the
+            // SDK. Surface it as the SDK's own error instead.
+            throw new ReevitApiException(
+                sprintf('Reevit returned a non-JSON body: %s', json_last_error_msg()),
+                $response->getStatusCode(),
+                'invalid_response'
+            );
+        }
+
+        return $decoded;
     }
 
     /**

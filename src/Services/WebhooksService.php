@@ -27,13 +27,19 @@ class WebhooksService
         return $this->client->request('POST', '/v1/webhooks/config', $options);
     }
 
-    public function deleteConfig(?string $idempotencyKey = null): void
+    /**
+     * @return array<string, mixed>|null The API's acknowledgement body, or null
+     *                                   when the endpoint answers 204 No Content.
+     */
+    public function deleteConfig(?string $idempotencyKey = null): ?array
     {
         $options = [];
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        $this->client->request('DELETE', '/v1/webhooks/config', $options);
+        $response = $this->client->request('DELETE', '/v1/webhooks/config', $options);
+
+        return is_array($response) ? $response : null;
     }
 
     public function sendTest(?string $idempotencyKey = null): array
