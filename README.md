@@ -152,6 +152,51 @@ There are **two types of webhooks** in Reevit:
 
 The SDK ships a constant-time verifier — `Reevit\Webhooks\SignatureVerifier::verify($payload, $signature, $secret)` — so you do not have to reimplement HMAC. Pass the **raw** request body (`file_get_contents('php://input')`, not parsed-and-reencoded JSON), the `X-Reevit-Signature` header, and your signing secret.
 
+### Replay protection
+
+`verify()` proves a delivery is authentic; it does not prove it is *recent*. A
+captured-but-valid delivery replayed an hour later still passes. Reevit signs a
+`signature_timestamp` (RFC 3339) into the body, so the two helpers below check
+freshness as well.
+
+```php
+use Reevit\Webhooks\SignatureVerifier;
+
+$raw = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'] ?? null;
+
+// Signature + freshness, as a boolean.
+if (!SignatureVerifier::verifyWithTolerance($raw, $signature, $secret)) {
+    http_response_code(400);
+    exit;
+}
+```
+
+Or verify and decode in one call, with a typed error explaining any rejection:
+
+```php
+use Reevit\ReevitApiException;
+use Reevit\Webhooks\SignatureVerifier;
+
+try {
+    $event = SignatureVerifier::constructEvent($raw, $signature, $secret);
+} catch (ReevitApiException $e) {
+    // invalid_signature | missing_signature_timestamp |
+    // invalid_signature_timestamp | timestamp_outside_tolerance | invalid_payload
+    error_log('rejected webhook: ' . $e->errorCode);
+    http_response_code(400);
+    exit;
+}
+
+match ($event['event']) { /* ... */ };
+```
+
+The tolerance defaults to `SignatureVerifier::DEFAULT_TOLERANCE_SECONDS` (300),
+the same window every Reevit SDK uses, and applies in both directions so a
+future-dated timestamp from a skewed clock is rejected too. A body without a
+`signature_timestamp` is rejected — freshness cannot be proven. Use `verify()`
+if you deliberately want the signature check alone.
+
 ### PHP Webhook Handler
 
 ```php
@@ -529,6 +574,19 @@ return [
   can tell "no settlements" from "the response shape changed". This matches the
   Go and Rust SDKs. `ConnectionsService` already raised here (as
   `\UnexpectedValueException`) and now raises `ReevitApiException` too.
+
+#### Added
+
+- `SignatureVerifier::verifyWithTolerance()` and
+  `SignatureVerifier::constructEvent()` — signature verification plus the
+  `signature_timestamp` replay check, with a 300 s default window shared across
+  every Reevit SDK.
+
+#### Security
+
+- Ids interpolated into request paths are now `rawurlencode`d in every service.
+  Previously only `ConnectionsService` escaped them, so an id containing `/`,
+  `?` or `#` could restructure the request.
 
 ### v0.9.0
 
