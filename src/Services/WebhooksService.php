@@ -59,7 +59,7 @@ class WebhooksService
 
     public function getEvent(string $id): array
     {
-        return $this->client->request('GET', "/v1/webhooks/events/{$id}");
+        return $this->client->request('GET', '/v1/webhooks/events/' . rawurlencode($id));
     }
 
     public function replayEvent(string $id, ?string $idempotencyKey = null): array
@@ -68,7 +68,7 @@ class WebhooksService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/webhooks/events/{$id}/replay", $options);
+        return $this->client->request('POST', '/v1/webhooks/events/' . rawurlencode($id) . '/replay', $options);
     }
 
     public function listOutbound(array $query = []): array
@@ -79,6 +79,6 @@ class WebhooksService
 
     public function getOutbound(string $id): array
     {
-        return $this->client->request('GET', "/v1/webhooks/outbound/{$id}");
+        return $this->client->request('GET', '/v1/webhooks/outbound/' . rawurlencode($id));
     }
 }

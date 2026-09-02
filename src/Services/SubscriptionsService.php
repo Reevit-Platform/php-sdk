@@ -31,7 +31,7 @@ class SubscriptionsService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/subscriptions/{$id}");
+        return $this->client->request('GET', '/v1/subscriptions/' . rawurlencode($id));
     }
 
     public function update(string $id, array $data, ?string $idempotencyKey = null): array
@@ -40,7 +40,7 @@ class SubscriptionsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('PATCH', "/v1/subscriptions/{$id}", $options);
+        return $this->client->request('PATCH', '/v1/subscriptions/' . rawurlencode($id), $options);
     }
 
     public function cancel(string $id, ?string $idempotencyKey = null): array
@@ -49,7 +49,7 @@ class SubscriptionsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/subscriptions/{$id}/cancel", $options);
+        return $this->client->request('POST', '/v1/subscriptions/' . rawurlencode($id) . '/cancel', $options);
     }
 
     public function resume(string $id, ?string $idempotencyKey = null): array
@@ -58,6 +58,6 @@ class SubscriptionsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/subscriptions/{$id}/resume", $options);
+        return $this->client->request('POST', '/v1/subscriptions/' . rawurlencode($id) . '/resume', $options);
     }
 }

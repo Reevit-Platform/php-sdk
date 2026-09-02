@@ -30,7 +30,7 @@ class PaymentLinksService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/payment-links/{$id}");
+        return $this->client->request('GET', '/v1/payment-links/' . rawurlencode($id));
     }
 
     public function update(string $id, array $data, ?string $idempotencyKey = null): array
@@ -39,7 +39,7 @@ class PaymentLinksService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('PATCH', "/v1/payment-links/{$id}", $options);
+        return $this->client->request('PATCH', '/v1/payment-links/' . rawurlencode($id), $options);
     }
 
     public function delete(string $id, ?string $idempotencyKey = null): void
@@ -48,22 +48,22 @@ class PaymentLinksService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        $this->client->request('DELETE', "/v1/payment-links/{$id}", $options);
+        $this->client->request('DELETE', '/v1/payment-links/' . rawurlencode($id), $options);
     }
 
     public function getStats(string $id): array
     {
-        return $this->client->request('GET', "/v1/payment-links/{$id}/stats");
+        return $this->client->request('GET', '/v1/payment-links/' . rawurlencode($id) . '/stats');
     }
 
     public function listPayments(string $id, array $query = []): array
     {
-        $response = $this->client->request('GET', "/v1/payment-links/{$id}/payments", ['query' => $query]);
+        $response = $this->client->request('GET', '/v1/payment-links/' . rawurlencode($id) . '/payments', ['query' => $query]);
         return ListEnvelope::extractArray($response, 'payments');
     }
 
     public function getByCode(string $code): array
     {
-        return $this->client->request('GET', "/v1/pay/{$code}");
+        return $this->client->request('GET', '/v1/pay/' . rawurlencode($code));
     }
 }

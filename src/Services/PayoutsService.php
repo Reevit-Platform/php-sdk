@@ -28,17 +28,17 @@ class PayoutsService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/payouts/{$id}");
+        return $this->client->request('GET', '/v1/payouts/' . rawurlencode($id));
     }
 
     public function confirm(string $id): array
     {
-        return $this->client->request('POST', "/v1/payouts/{$id}/confirm", ['json' => new \stdClass()]);
+        return $this->client->request('POST', '/v1/payouts/' . rawurlencode($id) . '/confirm', ['json' => new \stdClass()]);
     }
 
     public function cancel(string $id): array
     {
-        return $this->client->request('POST', "/v1/payouts/{$id}/cancel", ['json' => new \stdClass()]);
+        return $this->client->request('POST', '/v1/payouts/' . rawurlencode($id) . '/cancel', ['json' => new \stdClass()]);
     }
 
     public function createBulk(array $data, string $idempotencyKey): array
@@ -78,7 +78,7 @@ class PayoutsService
 
     public function getBeneficiary(string $id): array
     {
-        return $this->client->request('GET', "/v1/beneficiaries/{$id}");
+        return $this->client->request('GET', '/v1/beneficiaries/' . rawurlencode($id));
     }
 
     /**
@@ -87,7 +87,7 @@ class PayoutsService
      */
     public function deleteBeneficiary(string $id): ?array
     {
-        $response = $this->client->request('DELETE', "/v1/beneficiaries/{$id}");
+        $response = $this->client->request('DELETE', '/v1/beneficiaries/' . rawurlencode($id));
 
         return is_array($response) ? $response : null;
     }

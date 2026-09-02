@@ -36,7 +36,7 @@ class PaymentsService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/payments/{$id}");
+        return $this->client->request('GET', '/v1/payments/' . rawurlencode($id));
     }
 
     public function updateIntent(string $id, array $data, ?string $idempotencyKey = null): array
@@ -45,7 +45,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('PATCH', "/v1/payments/intents/{$id}", $options);
+        return $this->client->request('PATCH', '/v1/payments/intents/' . rawurlencode($id), $options);
     }
 
     public function confirm(string $id, ?string $idempotencyKey = null): array
@@ -54,7 +54,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/payments/{$id}/confirm", $options);
+        return $this->client->request('POST', '/v1/payments/' . rawurlencode($id) . '/confirm', $options);
     }
 
     public function confirmIntent(string $id, string $clientSecret, ?string $idempotencyKey = null): array
@@ -66,7 +66,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/payments/{$id}/confirm-intent", $options);
+        return $this->client->request('POST', '/v1/payments/' . rawurlencode($id) . '/confirm-intent', $options);
     }
 
     public function cancel(string $id, ?string $idempotencyKey = null): array
@@ -75,7 +75,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/payments/{$id}/cancel", $options);
+        return $this->client->request('POST', '/v1/payments/' . rawurlencode($id) . '/cancel', $options);
     }
 
     public function retry(string $id, ?string $idempotencyKey = null): array
@@ -84,7 +84,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/payments/{$id}/retry", $options);
+        return $this->client->request('POST', '/v1/payments/' . rawurlencode($id) . '/retry', $options);
     }
 
     public function refund(string $id, $amount = null, $reason = null, ?string $idempotencyKey = null): array
@@ -96,7 +96,7 @@ class PaymentsService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/payments/{$id}/refund", $options);
+        return $this->client->request('POST', '/v1/payments/' . rawurlencode($id) . '/refund', $options);
     }
 
     public function stats(array $query = []): array
