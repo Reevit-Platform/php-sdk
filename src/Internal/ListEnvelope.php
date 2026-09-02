@@ -54,7 +54,7 @@ final class ListEnvelope
         }
 
         // Shape 1: bare list.
-        if (self::isList($response)) {
+        if (array_is_list($response)) {
             return $response;
         }
 
@@ -65,7 +65,7 @@ final class ListEnvelope
 
         if (isset($response['data']) && is_array($response['data'])) {
             // Shape 3: {"data": [...], "pagination": {...}}.
-            if (self::isList($response['data'])) {
+            if (array_is_list($response['data'])) {
                 return $response['data'];
             }
 
@@ -76,28 +76,5 @@ final class ListEnvelope
         }
 
         return null;
-    }
-
-    /**
-     * Equivalent of `array_is_list()` (PHP 8.1+), reimplemented so this helper
-     * also works on the package's stated minimum PHP version (7.4).
-     *
-     * @param array<mixed> $array
-     */
-    private static function isList(array $array): bool
-    {
-        if (function_exists('array_is_list')) {
-            return array_is_list($array);
-        }
-
-        $expectedKey = 0;
-        foreach ($array as $key => $_value) {
-            if ($key !== $expectedKey) {
-                return false;
-            }
-            $expectedKey++;
-        }
-
-        return true;
     }
 }
