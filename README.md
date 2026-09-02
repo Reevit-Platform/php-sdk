@@ -71,6 +71,44 @@ $intent = $client->payments->createIntent(
 );
 ```
 
+## Error handling
+
+Every failed request raises `Reevit\ReevitApiException`. The API's error code,
+message, structured details and request id are already parsed off the response
+body — no need to re-read `$e->getResponse()->getBody()` yourself.
+
+```php
+use Reevit\ReevitApiException;
+
+try {
+    $payment = $client->payments->confirm('pay_123');
+} catch (ReevitApiException $e) {
+    if ($e->errorCode === 'payment_declined') {
+        // $e->details carries the issuer's structured reason, when the API sends one.
+    }
+
+    if ($e->isRecoverable()) {
+        // 0 (transport failure), 408, 409, 425, 429 and every 5xx.
+    }
+
+    error_log(sprintf('reevit %s: %s', $e->requestId ?? 'no-request-id', $e->getMessage()));
+}
+```
+
+| Member | Meaning |
+|---|---|
+| `$e->status` | HTTP status, or `0` when the request never got a response |
+| `$e->errorCode` | Machine-readable code, e.g. `payment_declined`. Defaults to `api_error`. Named `errorCode` because `\Exception::$code` is reserved for an int |
+| `$e->getMessage()` | Human-readable message from the API |
+| `$e->details` | Structured detail from the API body (`[]` when absent) |
+| `$e->requestId` | `X-Request-Id` (falling back to `X-Reevit-Request-Id`) — quote this in support tickets |
+| `$e->isRecoverable()` | Whether a retry could plausibly succeed |
+| `$e->getPrevious()` | The originating Guzzle exception, preserved |
+
+Error codes are shared across every Reevit SDK, including
+`unexpected_response_shape` — raised when a list endpoint answers with a body
+this SDK cannot recognise, rather than silently returning an empty list.
+
 ## Features
 
 - **Payments**: Create intents, update intents, confirm, confirm intent, cancel, retry, refund, stats
@@ -457,6 +495,17 @@ return [
 ---
 
 ## Release Notes
+
+### Unreleased
+
+#### Changed
+
+- **Behaviour change**: failed requests now raise `Reevit\ReevitApiException`
+  instead of escaping as a raw `GuzzleHttp\Exception\ClientException` /
+  `ServerException` / `ConnectException`. The Guzzle exception is preserved as
+  `getPrevious()`, so `catch (\GuzzleHttp\Exception\GuzzleException $e)` no
+  longer fires — catch `Reevit\ReevitApiException` (or inspect
+  `$e->getPrevious()`) instead.
 
 ### v0.9.0
 

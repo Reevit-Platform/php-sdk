@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Reevit;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
+use Psr\Http\Message\ResponseInterface;
 use Reevit\Services\CheckoutSessionsService;
 use Reevit\Services\ConnectionsService;
 use Reevit\Services\CustomersService;
@@ -44,14 +47,19 @@ class Reevit
     public InvoicesService $invoices;
     public PayoutsService $payouts;
 
+    /**
+     * @param callable|null $httpHandler Optional Guzzle handler (or HandlerStack)
+     *                                   for injecting middleware or a test double.
+     */
     public function __construct(
         string $apiKey,
         ?string $orgId = null,
         ?string $baseUrl = null,
-        int $timeout = self::DEFAULT_TIMEOUT
+        int $timeout = self::DEFAULT_TIMEOUT,
+        ?callable $httpHandler = null
     ) {
         $this->orgId = $orgId;
-        $this->httpClient = new Client([
+        $config = [
             'base_uri' => $baseUrl ?: self::API_BASE_URL_PRODUCTION,
             'timeout' => $timeout,
             'headers' => [
@@ -61,7 +69,11 @@ class Reevit
                 'X-Reevit-Client' => '@reevit/php',
                 'X-Reevit-Client-Version' => self::VERSION,
             ],
-        ]);
+        ];
+        if ($httpHandler !== null) {
+            $config['handler'] = $httpHandler;
+        }
+        $this->httpClient = new Client($config);
 
         $this->payments = new PaymentsService($this);
         $this->connections = new ConnectionsService($this);
@@ -91,7 +103,15 @@ class Reevit
         }
         $options['headers'] = $headers;
 
-        $response = $this->httpClient->request($method, $path, $options);
+        try {
+            $response = $this->httpClient->request($method, $path, $options);
+        } catch (RequestException $e) {
+            throw self::apiExceptionFrom($e);
+        } catch (TransferException $e) {
+            // Connection refused, DNS failure, timeout: no response to read.
+            throw new ReevitApiException($e->getMessage(), 0, 'connection_error', [], null, $e);
+        }
+
         if ($response->getStatusCode() === 204) {
             return null;
         }
@@ -102,5 +122,57 @@ class Reevit
         }
 
         return json_decode($body, true);
+    }
+
+    /**
+     * Translate a Guzzle transport failure into the SDK's typed error, pulling
+     * `code`, `message`, `details` and the request id off the API's response
+     * body so callers never have to re-parse it themselves.
+     */
+    private static function apiExceptionFrom(RequestException $e): ReevitApiException
+    {
+        $response = $e->getResponse();
+        if (!$response instanceof ResponseInterface) {
+            return new ReevitApiException($e->getMessage(), 0, 'connection_error', [], null, $e);
+        }
+
+        $status = $response->getStatusCode();
+        $decoded = json_decode((string) $response->getBody(), true);
+        $body = is_array($decoded) ? $decoded : [];
+
+        $message = self::firstNonEmptyString($body, ['message', 'error'])
+            ?? sprintf('Reevit request failed with status %d', $status);
+        $code = self::firstNonEmptyString($body, ['code']) ?? 'api_error';
+        $details = isset($body['details']) && is_array($body['details']) ? $body['details'] : [];
+
+        $requestId = $response->getHeaderLine('X-Request-Id');
+        if ($requestId === '') {
+            $requestId = $response->getHeaderLine('X-Reevit-Request-Id');
+        }
+
+        return new ReevitApiException(
+            $message,
+            $status,
+            $code,
+            $details,
+            $requestId === '' ? null : $requestId,
+            $e
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @param list<string>         $keys
+     */
+    private static function firstNonEmptyString(array $body, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $body[$key] ?? null;
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 }
