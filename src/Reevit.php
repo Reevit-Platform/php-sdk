@@ -19,6 +19,13 @@ use Reevit\Services\WebhooksService;
 
 class Reevit
 {
+    /**
+     * The SDK version reported in the `X-Reevit-Client-Version` header.
+     *
+     * Keep this in step with the released Packagist version.
+     */
+    public const VERSION = '0.3.0';
+
     private const API_BASE_URL_PRODUCTION = 'https://api.reevit.io';
     private const DEFAULT_TIMEOUT = 30;
 
@@ -52,7 +59,7 @@ class Reevit
                 'User-Agent' => '@reevit/php',
                 'X-Reevit-Key' => $apiKey,
                 'X-Reevit-Client' => '@reevit/php',
-                'X-Reevit-Client-Version' => '0.9.0',
+                'X-Reevit-Client-Version' => self::VERSION,
             ],
         ]);
 
