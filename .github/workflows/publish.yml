@@ -51,7 +51,7 @@ jobs:
         run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Run tests
-        run: composer test || echo "No tests configured"
+        run: composer test
 
       # Note: Packagist auto-syncs from GitHub
       # This workflow just validates the package is ready
