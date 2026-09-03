@@ -577,6 +577,9 @@ return [
 
 #### Added
 
+- `$reevit->checkoutSessions` — server-created checkout sessions
+  (`POST /v1/checkout/sessions`). Present in `src/` since "Add checkout sessions
+  to PHP SDK" but never part of a published version.
 - `SignatureVerifier::verifyWithTolerance()` and
   `SignatureVerifier::constructEvent()` — signature verification plus the
   `signature_timestamp` replay check, with a 300 s default window shared across
@@ -588,13 +591,17 @@ return [
   Previously only `ConnectionsService` escaped them, so an id containing `/`,
   `?` or `#` could restructure the request.
 
-### v0.9.0
+### Released
 
-- Added server-created checkout sessions
-- Version alignment across all Reevit SDKs
-- Updated documentation and webhook examples
-- Added support for Apple Pay and Google Pay
-- Updated supported PSPs and payment methods documentation
+Packagist has published `0.1.0`, `0.2.0` and `0.2.1`. There is no `0.9.0`: the
+heading that used to sit here described a release that was never tagged and
+never published, and two of its bullets were not true of this SDK — nothing in
+`src/` has ever mentioned Apple Pay or Google Pay. The one accurate item,
+server-created checkout sessions (`$reevit->checkoutSessions`), is real but
+still unreleased, so it is listed under Unreleased above.
+
+`Reevit::VERSION` is `0.3.0`, ahead of Packagist's `0.2.1`, and is what the
+`X-Reevit-Client-Version` header reports. Keep it in step when Unreleased ships.
 
 ---
 
