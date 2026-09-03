@@ -9,7 +9,7 @@ The official PHP SDK for [Reevit](https://reevit.io) — a unified payment orche
 ## Installation
 
 ```bash
-composer require reevit/reevit-php:0.9.0
+composer require reevit/reevit-php
 ```
 
 ## Quick Start
@@ -71,6 +71,44 @@ $intent = $client->payments->createIntent(
 );
 ```
 
+## Error handling
+
+Every failed request raises `Reevit\ReevitApiException`. The API's error code,
+message, structured details and request id are already parsed off the response
+body — no need to re-read `$e->getResponse()->getBody()` yourself.
+
+```php
+use Reevit\ReevitApiException;
+
+try {
+    $payment = $client->payments->confirm('pay_123');
+} catch (ReevitApiException $e) {
+    if ($e->errorCode === 'payment_declined') {
+        // $e->details carries the issuer's structured reason, when the API sends one.
+    }
+
+    if ($e->isRecoverable()) {
+        // 0 (transport failure), 408, 409, 425, 429 and every 5xx.
+    }
+
+    error_log(sprintf('reevit %s: %s', $e->requestId ?? 'no-request-id', $e->getMessage()));
+}
+```
+
+| Member | Meaning |
+|---|---|
+| `$e->status` | HTTP status, or `0` when the request never got a response |
+| `$e->errorCode` | Machine-readable code, e.g. `payment_declined`. Defaults to `api_error`. Named `errorCode` because `\Exception::$code` is reserved for an int |
+| `$e->getMessage()` | Human-readable message from the API |
+| `$e->details` | Structured detail from the API body (`[]` when absent) |
+| `$e->requestId` | `X-Request-Id` (falling back to `X-Reevit-Request-Id`) — quote this in support tickets |
+| `$e->isRecoverable()` | Whether a retry could plausibly succeed |
+| `$e->getPrevious()` | The originating Guzzle exception, preserved |
+
+Error codes are shared across every Reevit SDK, including
+`unexpected_response_shape` — raised when a list endpoint answers with a body
+this SDK cannot recognise, rather than silently returning an empty list.
+
 ## Features
 
 - **Payments**: Create intents, update intents, confirm, confirm intent, cancel, retry, refund, stats
@@ -113,6 +151,51 @@ There are **two types of webhooks** in Reevit:
 4. Set environment variable: `REEVIT_WEBHOOK_SECRET=whsec_xxx...`
 
 The SDK ships a constant-time verifier — `Reevit\Webhooks\SignatureVerifier::verify($payload, $signature, $secret)` — so you do not have to reimplement HMAC. Pass the **raw** request body (`file_get_contents('php://input')`, not parsed-and-reencoded JSON), the `X-Reevit-Signature` header, and your signing secret.
+
+### Replay protection
+
+`verify()` proves a delivery is authentic; it does not prove it is *recent*. A
+captured-but-valid delivery replayed an hour later still passes. Reevit signs a
+`signature_timestamp` (RFC 3339) into the body, so the two helpers below check
+freshness as well.
+
+```php
+use Reevit\Webhooks\SignatureVerifier;
+
+$raw = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'] ?? null;
+
+// Signature + freshness, as a boolean.
+if (!SignatureVerifier::verifyWithTolerance($raw, $signature, $secret)) {
+    http_response_code(400);
+    exit;
+}
+```
+
+Or verify and decode in one call, with a typed error explaining any rejection:
+
+```php
+use Reevit\ReevitApiException;
+use Reevit\Webhooks\SignatureVerifier;
+
+try {
+    $event = SignatureVerifier::constructEvent($raw, $signature, $secret);
+} catch (ReevitApiException $e) {
+    // invalid_signature | missing_signature_timestamp |
+    // invalid_signature_timestamp | timestamp_outside_tolerance | invalid_payload
+    error_log('rejected webhook: ' . $e->errorCode);
+    http_response_code(400);
+    exit;
+}
+
+match ($event['event']) { /* ... */ };
+```
+
+The tolerance defaults to `SignatureVerifier::DEFAULT_TOLERANCE_SECONDS` (300),
+the same window every Reevit SDK uses, and applies in both directions so a
+future-dated timestamp from a skewed clock is rejected too. A body without a
+`signature_timestamp` is rejected — freshness cannot be proven. Use `verify()`
+if you deliberately want the signature check alone.
 
 ### PHP Webhook Handler
 
@@ -457,6 +540,53 @@ return [
 ---
 
 ## Release Notes
+
+### Unreleased
+
+#### Changed
+
+- **Behaviour change**: failed requests now raise `Reevit\ReevitApiException`
+  instead of escaping as a raw `GuzzleHttp\Exception\ClientException` /
+  `ServerException` / `ConnectException`. The Guzzle exception is preserved as
+  `getPrevious()`, so `catch (\GuzzleHttp\Exception\GuzzleException $e)` no
+  longer fires — catch `Reevit\ReevitApiException` (or inspect
+  `$e->getPrevious()`) instead.
+
+#### Fixed
+
+- A path prefix on a custom base URL is no longer dropped. `new Reevit($key,
+  $org, 'https://gateway.internal/reevit')` now requests
+  `/reevit/v1/payments`; previously Guzzle's RFC 3986 resolution let the
+  absolute request path replace the base path and the SDK requested
+  `/v1/payments`.
+- `WebhooksService::deleteConfig()` and `PayoutsService::deleteBeneficiary()`
+  now return `?array` instead of `void`, forwarding the API's acknowledgement
+  body (`['status' => 'deleted']`) and `null` on a 204. Ignoring the return
+  value stays valid.
+- A non-JSON success body (a proxy answering 200 with an HTML error page) now
+  raises `ReevitApiException` with code `invalid_response` instead of reaching
+  the service layer as `null` and surfacing as a `TypeError` from inside the
+  SDK.
+- **Behaviour change**: a list endpoint whose body matches none of the four
+  supported shapes now raises `ReevitApiException` with code
+  `unexpected_response_shape` instead of returning `[]`. An empty list now only
+  ever means a recognised container that was empty, so a reconciliation sweep
+  can tell "no settlements" from "the response shape changed". This matches the
+  Go and Rust SDKs. `ConnectionsService` already raised here (as
+  `\UnexpectedValueException`) and now raises `ReevitApiException` too.
+
+#### Added
+
+- `SignatureVerifier::verifyWithTolerance()` and
+  `SignatureVerifier::constructEvent()` — signature verification plus the
+  `signature_timestamp` replay check, with a 300 s default window shared across
+  every Reevit SDK.
+
+#### Security
+
+- Ids interpolated into request paths are now `rawurlencode`d in every service.
+  Previously only `ConnectionsService` escaped them, so an id containing `/`,
+  `?` or `#` could restructure the request.
 
 ### v0.9.0
 

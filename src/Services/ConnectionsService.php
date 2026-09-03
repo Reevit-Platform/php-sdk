@@ -4,7 +4,7 @@ namespace Reevit\Services;
 
 use Reevit\Internal\ListEnvelope;
 use Reevit\Reevit;
-use UnexpectedValueException;
+use Reevit\ReevitApiException;
 
 class ConnectionsService
 {
@@ -32,13 +32,9 @@ class ConnectionsService
     public function listPage(array $query = []): array
     {
         $response = $this->client->request('GET', '/v1/connections', ['query' => $query]);
-        if (!is_array($response)) {
-            throw new UnexpectedValueException('unexpected connections response: expected an object');
-        }
-
         $connections = ListEnvelope::tryExtractArray($response, 'connections');
         if ($connections === null) {
-            throw new UnexpectedValueException('unexpected connections response: missing connections array');
+            throw ListEnvelope::unexpectedShape('connections');
         }
 
         $pagination = isset($response['pagination']) && is_array($response['pagination'])
@@ -106,7 +102,11 @@ class ConnectionsService
     {
         $response = $this->client->request('GET', '/v1/connections/labels');
         if (!is_array($response) || !$this->isList($response)) {
-            throw new UnexpectedValueException('unexpected connection labels response: expected an array');
+            throw new ReevitApiException(
+                'unexpected response shape: connection labels must be a JSON array',
+                0,
+                'unexpected_response_shape'
+            );
         }
         return $response;
     }

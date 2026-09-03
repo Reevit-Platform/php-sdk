@@ -27,13 +27,19 @@ class WebhooksService
         return $this->client->request('POST', '/v1/webhooks/config', $options);
     }
 
-    public function deleteConfig(?string $idempotencyKey = null): void
+    /**
+     * @return array<string, mixed>|null The API's acknowledgement body, or null
+     *                                   when the endpoint answers 204 No Content.
+     */
+    public function deleteConfig(?string $idempotencyKey = null): ?array
     {
         $options = [];
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        $this->client->request('DELETE', '/v1/webhooks/config', $options);
+        $response = $this->client->request('DELETE', '/v1/webhooks/config', $options);
+
+        return is_array($response) ? $response : null;
     }
 
     public function sendTest(?string $idempotencyKey = null): array
@@ -53,7 +59,7 @@ class WebhooksService
 
     public function getEvent(string $id): array
     {
-        return $this->client->request('GET', "/v1/webhooks/events/{$id}");
+        return $this->client->request('GET', '/v1/webhooks/events/' . rawurlencode($id));
     }
 
     public function replayEvent(string $id, ?string $idempotencyKey = null): array
@@ -62,7 +68,7 @@ class WebhooksService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('POST', "/v1/webhooks/events/{$id}/replay", $options);
+        return $this->client->request('POST', '/v1/webhooks/events/' . rawurlencode($id) . '/replay', $options);
     }
 
     public function listOutbound(array $query = []): array
@@ -73,6 +79,6 @@ class WebhooksService
 
     public function getOutbound(string $id): array
     {
-        return $this->client->request('GET', "/v1/webhooks/outbound/{$id}");
+        return $this->client->request('GET', '/v1/webhooks/outbound/' . rawurlencode($id));
     }
 }

@@ -30,7 +30,7 @@ class CustomersService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/customers/{$id}");
+        return $this->client->request('GET', '/v1/customers/' . rawurlencode($id));
     }
 
     public function update(string $id, array $data, ?string $idempotencyKey = null): array
@@ -39,7 +39,7 @@ class CustomersService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('PATCH', "/v1/customers/{$id}", $options);
+        return $this->client->request('PATCH', '/v1/customers/' . rawurlencode($id), $options);
     }
 
     public function delete(string $id, ?string $idempotencyKey = null): void
@@ -48,7 +48,7 @@ class CustomersService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        $this->client->request('DELETE', "/v1/customers/{$id}", $options);
+        $this->client->request('DELETE', '/v1/customers/' . rawurlencode($id), $options);
     }
 
     public function lookup(string $externalId): array
@@ -64,7 +64,7 @@ class CustomersService
 
     public function paymentHistory(string $id, array $query = []): array
     {
-        $response = $this->client->request('GET', "/v1/customers/{$id}/payments", ['query' => $query]);
+        $response = $this->client->request('GET', '/v1/customers/' . rawurlencode($id) . '/payments', ['query' => $query]);
         return ListEnvelope::extractArray($response, 'payments');
     }
 }

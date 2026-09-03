@@ -30,7 +30,7 @@ class RoutingRulesService
 
     public function get(string $id): array
     {
-        return $this->client->request('GET', "/v1/routing-rules/{$id}");
+        return $this->client->request('GET', '/v1/routing-rules/' . rawurlencode($id));
     }
 
     public function update(string $id, array $data, ?string $idempotencyKey = null): array
@@ -39,7 +39,7 @@ class RoutingRulesService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        return $this->client->request('PATCH', "/v1/routing-rules/{$id}", $options);
+        return $this->client->request('PATCH', '/v1/routing-rules/' . rawurlencode($id), $options);
     }
 
     public function delete(string $id, ?string $idempotencyKey = null): void
@@ -48,6 +48,6 @@ class RoutingRulesService
         if ($idempotencyKey) {
             $options['headers'] = ['Idempotency-Key' => $idempotencyKey];
         }
-        $this->client->request('DELETE', "/v1/routing-rules/{$id}", $options);
+        $this->client->request('DELETE', '/v1/routing-rules/' . rawurlencode($id), $options);
     }
 }
