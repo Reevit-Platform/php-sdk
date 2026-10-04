@@ -103,6 +103,13 @@ class Reevit
         }
         $options['headers'] = $headers;
 
+        // Service JSON payloads are objects. Guzzle encodes an empty PHP array
+        // as [], which object-decoding endpoints reject (including full refunds).
+        // Preserve populated payloads and nested arrays, such as item lists.
+        if (($options['json'] ?? null) === []) {
+            $options['json'] = new \stdClass();
+        }
+
         try {
             $response = $this->httpClient->request($method, self::relativePath($path), $options);
         } catch (RequestException $e) {
