@@ -27,7 +27,7 @@ class Reevit
      *
      * Keep this in step with the released Packagist version.
      */
-    public const VERSION = '0.3.0';
+    public const VERSION = '0.3.1';
 
     private const API_BASE_URL_PRODUCTION = 'https://api.reevit.io';
     private const DEFAULT_TIMEOUT = 30;

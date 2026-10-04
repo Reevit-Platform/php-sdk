@@ -541,6 +541,14 @@ return [
 
 ## Release Notes
 
+### v0.3.1 (unreleased)
+
+#### Fixed
+
+- Empty JSON mutation payloads now send `{}` instead of `[]`. Full refunds
+  without an amount or reason pass the API's object decoder. Populated payloads,
+  nested lists, GET lists, and caller-supplied idempotency keys keep their values.
+
 ### v0.3.0
 
 #### Changed
