@@ -27,7 +27,7 @@ class Reevit
      *
      * Keep this in step with the released Packagist version.
      */
-    public const VERSION = '0.3.0';
+    public const VERSION = '0.3.1';
 
     private const API_BASE_URL_PRODUCTION = 'https://api.reevit.io';
     private const DEFAULT_TIMEOUT = 30;
@@ -102,6 +102,13 @@ class Reevit
             $headers['X-Org-Id'] = $this->orgId;
         }
         $options['headers'] = $headers;
+
+        // Service JSON payloads are objects. Guzzle encodes an empty PHP array
+        // as [], which object-decoding endpoints reject (including full refunds).
+        // Preserve populated payloads and nested arrays, such as item lists.
+        if (($options['json'] ?? null) === []) {
+            $options['json'] = new \stdClass();
+        }
 
         try {
             $response = $this->httpClient->request($method, self::relativePath($path), $options);
