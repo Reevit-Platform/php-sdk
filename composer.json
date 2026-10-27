@@ -1,8 +1,37 @@
 {
     "name": "reevit/reevit-php",
-    "description": "Reevit PHP SDK",
+    "description": "Reevit PHP SDK — Unified Payment Orchestration for Africa (Paystack, Hubtel, Flutterwave, M-Pesa, Moolre, Monnify, PawaPay, Stripe)",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://reevit.io",
+    "keywords": [
+        "reevit",
+        "payment-orchestration",
+        "payments",
+        "africa",
+        "ghana",
+        "nigeria",
+        "kenya",
+        "mobile-money",
+        "paystack",
+        "hubtel",
+        "flutterwave",
+        "mpesa",
+        "moolre",
+        "stripe"
+    ],
+    "authors": [
+        {
+            "name": "Reevit",
+            "email": "support@reevit.io",
+            "homepage": "https://reevit.io"
+        }
+    ],
+    "support": {
+        "docs": "https://docs.reevit.io",
+        "source": "https://github.com/Reevit-Platform/php-sdk",
+        "issues": "https://github.com/Reevit-Platform/php-sdk/issues"
+    },
     "autoload": {
         "psr-4": {
             "Reevit\\": "src/"
